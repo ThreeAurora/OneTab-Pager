@@ -1,2 +1,161 @@
-/* OneTab 不卡补丁 —— 屏幕外条目跳过布局与命中测试 */
-.tab { content-visibility: auto; contain-intrinsic-size: auto 26px; }
+/* ===== OneTab 不卡补丁 BEGIN =====
+ * 这一段由 apply_patch.ps1 自动维护：重打补丁会从 BEGIN 到 END 整段覆盖，
+ * 不要在段内手写内容。
+ *
+ * 补丁分两层：
+ *
+ *   第一层（本文件 · 纯 CSS 兜底）
+ *     万一 onetab.virtual.js 没加载成功，靠 content-visibility 让屏幕外行
+ *     跳过绘制。实测只降 44%（12.25ms → 6.86ms），因为父容器该遍历的子盒子
+ *     一个没少。所以它只是保险，不是主力。
+ *
+ *   第二层（onetab.virtual.js · 真虚拟滚动）
+ *     把屏幕外的行/组用 display:none 彻底移出布局树，再用宿主容器 padding
+ *     顶住被摘掉的高度。这才让成本与条目数解耦。
+ *
+ * 关键细节：第一层与第二层互相干扰。
+ *   content-visibility: auto 的元素在屏幕外时，getBoundingClientRect() 返回的是
+ *   contain-intrinsic-size 估算值（26px）而不是真实高度 —— 而第二层恰恰要靠
+ *   真实高度算位置。所以第二层启用时会给 <html> 加 .otvz-on，把第一层关掉；
+ *   JS 若没跑起来，没有 .otvz-on，第一层照常兜底。
+ *
+ * 排除项（都实测过，别再试）：
+ *   `contain: layout paint style` 反而更慢；box-shadow / 圆角 / flex 与卡顿无关。
+ * ===== */
+
+html:not(.otvz-on) .tab {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 26px;
+}
+
+/* 虚拟滚动改动宿主容器 padding 期间，禁止浏览器自作聪明地补偿滚动位置 */
+html.otvz-on .tab,
+html.otvz-on .tabGroup {
+  overflow-anchor: none;
+}
+
+/* 被虚拟滚动摘出布局树的行。
+   注意这里**只负责隐藏**：显示永远靠「不写这个 class」，
+   于是官方自己的筛选/搜索/折叠逻辑永远不会被我们覆盖。 */
+html.otvz-on .tab.otvz-off {
+  display: none !important;
+}
+
+/* 被摘出布局树的整组 —— 这一层省掉的开销是大头（5625 盒子 → 501 盒子） */
+html.otvz-on .tabGroup.otvz-off-g {
+  display: none !important;
+}
+
+/* 分页模式下，整段都没有本页条目的行容器（官方结构里一组基本对应一个容器，
+   但保险起见给它单独一个开关，避免容器残留 16px 的上下 padding 撑出空隙） */
+html.otvz-on .otvz-off-c {
+  display: none !important;
+}
+
+/* ---------- 翻页条（分页模式） ----------
+ * 视觉跟随官方：同字体、同灰阶，看起来就是 OneTab 自带的功能。
+ * 只有一页时整条隐藏，小库用户看不到任何变化。 */
+.otvz-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 16px 18px;
+  font-family: 'Open Sans', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-size: 13px;
+  color: #666;
+  user-select: none;
+}
+.otvz-pager.otvz-pager-top {
+  padding-top: 10px;
+  padding-bottom: 4px;
+}
+.otvz-pager button {
+  font: inherit;
+  color: #444;
+  background: transparent;
+  border: 1px solid #d5d5d5;
+  border-radius: 4px;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.otvz-pager button:hover:not(:disabled) {
+  background: var(--flag-hover-bg-color, #f0f0f0);
+  border-color: var(--flag-hover-bg-color, #e0e0e0);
+}
+.otvz-pager button:disabled {
+  color: #bbb;
+  border-color: #e5e5e5;
+  cursor: default;
+}
+.otvz-pager .otvz-pager-info {
+  min-width: 90px;
+  text-align: center;
+  color: #888;
+}
+.otvz-pager select {
+  font: inherit;
+  color: #444;
+  border: 1px solid #d5d5d5;
+  border-radius: 4px;
+  background: #fff;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.otvz-pager .otvz-pager-label {
+  color: #999;
+}
+
+/* ---------- 首屏直出期的组头按钮「加载中」外观 ----------
+ * 复刻期的组头（.tabGroup 带 data-otvz-replica）里，折页钮和两个 controlButton
+ * （全部还原 / 更多…）眼下还不能真操作 —— 官方把它们绑在框架实例上，复刻的静态
+ * DOM 进不去。与其让用户点了没反应（以为坏了），不如把「还在加载」直接画在脸上。
+ *
+ * 做法：复刻组头的这些按钮挂 data-otvz-pending 属性，纯 CSS 变灰 + 禁用光标，
+ *       不给任何 hover 反馈、不拦截点击（保留链接可点）。
+ * 退出：复刻 DOM 整体被摘掉，属性随之消失，官方自己的按钮不受任何影响。
+ *
+ * 为什么只动外观：官方按钮的 hover 底色、disabled 灰阶都取自官方变量，
+ * 这里照抄同一套令牌，视觉上像 OneTab 自带状态，而不是补丁塞的补丁。 */
+.otvz-pager, .otvz-replica-pending-note {
+  font-family: 'Open Sans', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+/* 复刻组头里挂起态的按钮：变灰、缩小字号、禁用手型、去掉 hover 变化 */
+[data-otvz-replica] .controlButton[data-otvz-pending],
+[data-otvz-replica] .foldButton[data-otvz-pending] {
+  cursor: default;
+  opacity: 0.42;
+  pointer-events: none;
+}
+/* 挂起态里那颗蓝字（全部还原 / 更多…）从蓝降为弱灰 —— 和官方 disabled 同源 */
+[data-otvz-replica] .controlButton[data-otvz-pending] > div {
+  color: var(--text-color-weak, #999) !important;
+}
+/* 挂起态里的小图标一起变淡 */
+[data-otvz-replica] .controlButton[data-otvz-pending] picture,
+[data-otvz-replica] .foldButton[data-otvz-pending] picture {
+  opacity: 0.55;
+}
+
+/* 一个极轻的呼吸：让人看出「在动」= 在加载，而不是「坏了」。
+   只动 opacity，不碰 transform —— 不动布局、不吃 compositor 主线程预算。 */
+@keyframes otvzPendingPulse {
+  0%   { opacity: 0.42; }
+  50%  { opacity: 0.24; }
+  100% { opacity: 0.42; }
+}
+[data-otvz-replica] .controlButton[data-otvz-pending],
+[data-otvz-replica] .foldButton[data-otvz-pending] {
+  animation: otvzPendingPulse 1.6s ease-in-out infinite;
+}
+
+/* 尊重「减少动效」系统偏好：关掉呼吸，只留静态灰 */
+@media (prefers-reduced-motion: reduce) {
+  [data-otvz-replica] .controlButton[data-otvz-pending],
+  [data-otvz-replica] .foldButton[data-otvz-pending] {
+    animation: none;
+  }
+}
+
+/* ===== OneTab 不卡补丁 END ===== */
