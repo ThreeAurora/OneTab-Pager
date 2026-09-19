@@ -1,0 +1,15 @@
+# 依赖与构建产物
+node_modules/
+output/
+
+# 编辑器 / 系统杂项
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 实测台的临时 profile 与结果（结果很大且是本机特有的，不入库）
+profile-*/
+results/
+*.log
