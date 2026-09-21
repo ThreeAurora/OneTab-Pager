@@ -4,7 +4,7 @@ import { readdirSync } from 'node:fs';
 
 const ROOT = 'E:/CCSpace/projects/2026/09/OneTab性能诊断';
 const UNP = ROOT + '/OneTab-patched-unpacked';           // 正确：项目根下的兄弟目录
-const P = ROOT + '/OneTab-Performance-Patch';
+const P = ROOT + '/OneTab-Pager';
 
 const out = {};
 out.srcJsSize = statSync(P + '/onetab.virtual.js').size;

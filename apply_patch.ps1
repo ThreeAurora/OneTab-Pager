@@ -1,12 +1,12 @@
 <#
-apply_patch.ps1 —— 给一个 OneTab 扩展目录打「不卡补丁」
+apply_patch.ps1 —— 给一个 OneTab 扩展目录加上「翻页版」内容
 
 补两层：
   1. onetab.css 追加补丁样式（含兜底的 content-visibility 与虚拟滚动用的 .otvz-off）
   2. 把 onetab.virtual.js 复制进去，并在 onetab.html 里挂上 <script>
 
 幂等：重复运行不会重复追加 / 重复插标签。
-适用：任何「商店版副本」或已经魔改过的目录（官方更新后重跑一次即可跟进）。
+适用：任何「商店版副本」或已经改造过的目录（官方更新后重跑一次即可跟进）。
 
 用法：
   .\apply_patch.ps1 -TargetDir "E:\CCSpace\projects\2026\09\OneTab性能诊断\OneTab-patched-unpacked"

@@ -1,6 +1,6 @@
-// pack-release.mjs — 把「OneTab 魔改版」打包成可安装的发布包（zip）。
+// pack-release.mjs — 把「OneTab 翻页版」打包成可安装的发布包（zip）。
 //
-// 为什么需要它：魔改版是「复制商店版 + 打补丁」组装出来的 unpacked 扩展。
+// 为什么需要它：翻页版是「复制商店版 + 加翻页与按需渲染」组装出来的 unpacked 扩展。
 // 主人/别人要装，最方便的是直接拿一个 zip 解压后「加载解压缩的扩展」。
 //
 // 做法：
@@ -18,8 +18,8 @@ const PROJECT = 'E:/CCSpace/projects/2026/09/OneTab性能诊断';
 const SRC = path.join(PROJECT, 'OneTab-patched-unpacked');
 const VER = process.env.RELEASE_VER || '2.18.1-p1';
 const OUT_ROOT = path.join(PROJECT, 'release', 'v' + VER);
-const STAGE = path.join(OUT_ROOT, 'OneTab-Modded-' + VER);
-const ZIP = path.join(OUT_ROOT, 'OneTab-Modded-' + VER + '.zip');
+const STAGE = path.join(OUT_ROOT, 'OneTab-Pager-' + VER);
+const ZIP = path.join(OUT_ROOT, 'OneTab-Pager-' + VER + '.zip');
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.vscode', '__MACOSX']);
 const SKIP_FILES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
@@ -66,12 +66,12 @@ function main() {
   const missing = marks.filter((m) => !cssTxt.includes(m) && !fs.readFileSync(vjs, 'utf8').includes(m));
 
   const info = [
-    'OneTab 魔改版（OneTab Performance Patch 组装产物）',
+    'OneTab 翻页版（OneTab Pager 组装产物）',
     '',
     '版本: ' + VER + '（基于 OneTab ' + prevVer + '）',
     '构建时间: ' + new Date().toISOString(),
     '',
-    '包含的补丁：',
+    '包含的改动：',
     '  · 两层虚拟滚动（组层 + 行层）',
     '  · 分页（50/100/200 条每页，选择记忆在 localStorage）',
     '  · 首屏直出（复刻期直接读 IndexedDB 渲染第一页）',
@@ -84,7 +84,7 @@ function main() {
     '  2. edge://extensions（或 chrome://extensions）→ 打开「开发人员模式」',
     '  3. 「加载解压缩的扩展」→ 选择本目录',
     '',
-    '注意：魔改版扩展 ID 与商店版不同，数据不共享。',
+    '注意：翻页版扩展 ID 与商店版不同，数据不共享。',
     '     需要搬运旧数据请见 tools/dump_onetab_items.js 与 tools/backfill_onetab_items.js。',
     '',
     '本包不含 OneTab 源码的修改声明——OneTab 商标与代码版权归其开发者所有。',

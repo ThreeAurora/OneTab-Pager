@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const SRC = 'E:/CCSpace/projects/2026/09/OneTab性能诊断/OneTab-patched-unpacked/ext-onetab-concatenated-sources-onetab.js';
 const SECTION = 'E:/CCSpace/cache/tmp/onetab-lab/replica-section.js';
-const TARGET = 'E:/CCSpace/projects/2026/09/OneTab性能诊断/OneTab-Performance-Patch/onetab.virtual.js';
+const TARGET = 'E:/CCSpace/projects/2026/09/OneTab性能诊断/OneTab-Pager/onetab.virtual.js';
 const REPORT = 'E:/CCSpace/cache/tmp/onetab-lab/results/build-replica.json';
 
 const src = fs.readFileSync(SRC, 'utf8');

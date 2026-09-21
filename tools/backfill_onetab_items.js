@@ -1,5 +1,5 @@
-// backfill_onetab_items.js —— 在「魔改版 OneTab」页面的 F12 Console 里运行
-// 前置：把 dump 下载的 JSON 复制进魔改版扩展目录并改名为 onetab-raw-backup.json
+// backfill_onetab_items.js —— 在「翻页版 OneTab」页面的 F12 Console 里运行
+// 前置：把 dump 下载的 JSON 复制进翻页版扩展目录并改名为 onetab-raw-backup.json
 // 用途：把导出的 IndexedDB 数据原样写回（item/attr/shareUpdate），刷新后数据全回来。
 (async () => {
   const data = await (await fetch('./onetab-raw-backup.json')).json();

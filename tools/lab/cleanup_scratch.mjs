@@ -7,12 +7,12 @@ mkdirSync(SCRATCH, { recursive: true });
 
 const files = [
   // tools/lab 下的临时探测脚本
-  'OneTab-Performance-Patch/tools/lab/sync_check.mjs',
-  'OneTab-Performance-Patch/tools/lab/state_probe.mjs',
-  'OneTab-Performance-Patch/tools/lab/find_onetab.mjs',
-  'OneTab-Performance-Patch/tools/lab/recheck_unp.mjs',
-  'OneTab-Performance-Patch/tools/lab/probe_unp_state.mjs',
-  'OneTab-Performance-Patch/tools/lab/poll_unp.mjs',
+  'OneTab-Pager/tools/lab/sync_check.mjs',
+  'OneTab-Pager/tools/lab/state_probe.mjs',
+  'OneTab-Pager/tools/lab/find_onetab.mjs',
+  'OneTab-Pager/tools/lab/recheck_unp.mjs',
+  'OneTab-Pager/tools/lab/probe_unp_state.mjs',
+  'OneTab-Pager/tools/lab/poll_unp.mjs',
 ];
 // 项目根的 cache_* 草稿（日志/中间结果）
 import { readdirSync } from 'node:fs';
@@ -30,9 +30,9 @@ for (const rel of files) {
 
 // 校验保留文件仍在
 const keep = {
-  virtualJs: existsSync(ROOT + '/OneTab-Performance-Patch/onetab.virtual.js'),
-  verifyMjs: existsSync(ROOT + '/OneTab-Performance-Patch/tools/lab/verify_patch.mjs'),
-  doc: existsSync(ROOT + '/OneTab-Performance-Patch/docs/虚拟滚动与分页.md'),
+  virtualJs: existsSync(ROOT + '/OneTab-Pager/onetab.virtual.js'),
+  verifyMjs: existsSync(ROOT + '/OneTab-Pager/tools/lab/verify_patch.mjs'),
+  doc: existsSync(ROOT + '/OneTab-Pager/docs/虚拟滚动与分页.md'),
   memLog: existsSync(ROOT + '/.workbuddy/memory/2026-09-19.md'),
 };
 writeFileSync(SCRATCH + '/_moved_manifest.json', JSON.stringify({ moved, missing, keep }, null, 2));

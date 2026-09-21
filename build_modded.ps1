@@ -1,13 +1,13 @@
-﻿# build_modded.ps1 —— 把商店版 OneTab 目录一键变成「魔改版」（不卡补丁版）
+﻿# build_modded.ps1 —— 把商店版 OneTab 目录一键变成「翻页版」（翻页 + 按需渲染）
 # 用法：
 #   .\build_modded.ps1 -SourceDir "C:\Users\<你>\AppData\Local\Microsoft\Edge\User Data\Default\Extensions\hoimpamkkoehapgenciaoajfkfkpgfop\2.18_0"
-#   .\build_modded.ps1 -SourceDir "..." -TargetDir "D:\My\OneTab-Modded" -DisplayName "OneTab 魔改版"
+#   .\build_modded.ps1 -SourceDir "..." -TargetDir "D:\My\OneTab-Pager" -DisplayName "OneTab 翻页版"
 # 或直接双击运行，按提示把商店版目录路径粘贴进来。
 [CmdletBinding()]
 param(
     [string]$SourceDir,
-    [string]$TargetDir = (Join-Path $PSScriptRoot 'output\OneTab-Modded'),
-    [string]$DisplayName = 'OneTab 魔改版'
+    [string]$TargetDir = (Join-Path $PSScriptRoot 'output\OneTab-Pager'),
+    [string]$DisplayName = 'OneTab 翻页版'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +49,6 @@ if ($cur.Contains('OneTab 不卡补丁')) {
 }
 
 Write-Host ""
-Write-Host "魔改版已生成: $TargetDir"
+Write-Host "翻页版已生成: $TargetDir"
 Write-Host "下一步：edge://extensions（或 chrome://extensions）→ 打开「开发人员模式」→「加载解压缩的扩展」→ 选择该目录。"
 Write-Host "首次使用请在商店版里先运行 tools/dump_onetab_items.js 导出数据，装好后再用 backfill_onetab_items.js 导入（见 README）。"
