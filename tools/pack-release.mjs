@@ -17,6 +17,9 @@ import { spawnSync } from 'node:child_process';
 const PROJECT = 'E:/CCSpace/projects/2026/09/OneTab性能诊断';
 const SRC = path.join(PROJECT, 'OneTab-patched-unpacked');
 const VER = process.env.RELEASE_VER || '2.18.1-p1';
+// manifest 的 version 只接受 1–4 段数字点分（带 -p3 后缀会被浏览器拒绝加载），
+// 所以清单里写 RELEASE_MANIFEST_VER（如 2.18.1.3），p3 标签走 version_name 显示。
+const MF_VER = process.env.RELEASE_MANIFEST_VER || VER;
 const OUT_ROOT = path.join(PROJECT, 'release', 'v' + VER);
 const STAGE = path.join(OUT_ROOT, 'OneTab-Pager-' + VER);
 const ZIP = path.join(OUT_ROOT, 'OneTab-Pager-' + VER + '.zip');
@@ -53,7 +56,8 @@ function main() {
   const mfPath = path.join(STAGE, 'manifest.json');
   const mf = JSON.parse(fs.readFileSync(mfPath, 'utf8'));
   const prevVer = mf.version;
-  mf.version = VER;
+  mf.version = MF_VER;
+  mf.version_name = VER;
   fs.writeFileSync(mfPath, JSON.stringify(mf, null, 3) + '\n');
 
   // 校验：补丁主体与 CSS 必须都在
@@ -68,7 +72,7 @@ function main() {
   const info = [
     'OneTab 翻页版（OneTab Pager 组装产物）',
     '',
-    '版本: ' + VER + '（基于 OneTab ' + prevVer + '）',
+    '版本: ' + VER + '（manifest ' + MF_VER + '；基于 OneTab ' + prevVer + '）',
     '构建时间: ' + new Date().toISOString(),
     '',
     '包含的改动：',
