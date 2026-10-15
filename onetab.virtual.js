@@ -984,7 +984,7 @@
   // =====================================================================
   var rp = { active: false, swapped: false, shell: null, listEl: null, barHost: null,
     navColEl: null,
-    hidEl: null,
+    hidEls: [],      // 复刻期被干预过的官方子元素（opacity / content-visibility），恢复时必须逐个清
     scroller: null, mo: null, timer: 0, swapT: 0, tStart: 0, tRows: 0, rows: 0, scrollerTop: 0 };
   var rpSmallRows = -1, rpSmallStable = 0;
   function rpActive() { return rp.active && !rp.swapped; }
@@ -1150,10 +1150,12 @@
   var RP_HIDE_ROWS = 200;      // 兜底：官方已物化这么多行也放权（rp.rows 异常时的保险）
   var RP_HIDE_MAX_MS = 6000;   // 硬上限：无论如何不压超过 6 秒
   function rpUnhide(why) {
-    var el = rp.hidEl;
-    rp.hidEl = null;
-    if (!el) return;
-    el.style.contentVisibility = '';
+    var els = rp.hidEls, i;
+    rp.hidEls = [];
+    if (!els.length) return;
+    for (i = 0; i < els.length; i++) {
+      try { els[i].style.contentVisibility = ''; } catch (e) { /* 忽略 */ }
+    }
     try { if (window.__otvz) window.__otvz.replicaHideMs = rpHideEnd(why); } catch (e) { /* 忽略 */ }
   }
   function rpHideEnd(why) {
@@ -1161,6 +1163,12 @@
     rp.hidStart = 0;
     return { why: why || 'swap', ms: ms };
   }
+  // ⚠️ 两条铁律（都踩过）：
+  //   1. 官方顶栏（header，内联 position:fixed，含搜索框）绝不参与「按住」——
+  //      它的渲染成本可以忽略，按住它只是把顶栏连同搜索框一起从画面上抹掉。
+  //   2. 按住是**逐元素**的事，恢复必须逐个清。此前只记、只清「最后一个」，
+  //      于是顶栏的 content-visibility:hidden 永久残留：换装后顶栏 rect 塌成 0 高，
+  //      搜索框从此不见（2026-10-15 由 searchbar-probe.mjs 实测坐实）。
   function rpHideOfficial() {
     var cad = document.getElementById('contentAreaDiv');
     if (!cad) return;
@@ -1168,11 +1176,12 @@
     for (i = 0; i < kids.length; i++) {
       k = kids[i];
       if (k === rp.shell) continue;
+      if (k.style.position === 'fixed') continue;           // 铁律 1：顶栏不碰
       if (k.style.opacity !== '0') { k.style.opacity = '0'; k.style.pointerEvents = 'none'; }
-      if (rp.hidEl !== k) {
+      if (rp.hidEls.indexOf(k) < 0) rp.hidEls.push(k);
+      if (k.style.contentVisibility !== 'hidden') {
         k.style.contentVisibility = 'hidden';
-        rp.hidEl = k;
-        rp.hidStart = now();
+        if (!rp.hidStart) rp.hidStart = now();              // 只记「第一次按住」的时刻
       }
     }
   }
@@ -1189,11 +1198,11 @@
     var kids = cad.children, i, k;
     if (!rp.swapped) {
       if (!rp.shell.isConnected) cad.insertBefore(rp.shell, cad.firstChild);
-      // 若官方框架把容器整个换过（hidEl 已不在树里）→ 忘掉旧引用，下一轮重新藏
-      if (rp.hidEl && !rp.hidEl.isConnected) { rp.hidEl = null; rp.hidStart = 0; }
+      // 被干预过的元素若已被官方框架整个换掉（不在树里）→ 忘掉旧引用，下一轮重新处理
+      if (rp.hidEls.length) rp.hidEls = rp.hidEls.filter(function (el) { return el.isConnected; });
       rpHideOfficial();
       // 唤醒：我的复刻页画好了就放权（主条件）；另两道兜底（理由见上方注释）
-      if (rp.hidEl) {
+      if (rp.hidEls.length) {
         if (rp.rows > 0) rpUnhide('replicaReady');
         else if (page.lastRows > 0 && page.lastRows >= RP_HIDE_ROWS) rpUnhide('rows');
         else if (rp.hidStart && now() - rp.hidStart > RP_HIDE_MAX_MS) rpUnhide('timeout');
